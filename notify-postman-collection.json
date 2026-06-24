@@ -1,8 +1,8 @@
 {
     "info": {
         "_postman_id": "notify-api-v1",
-        "name": "Notify - Email API",
-        "description": "API for dispatching transactional emails via Notify. All requests require the X-API-Key header.",
+        "name": "Notify - API",
+        "description": "API for dispatching transactional messages via Notify. Channels: mail (SMTP) and wab (WhatsApp via Baileys). All requests require the X-API-Key header.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "variable": [
@@ -196,6 +196,86 @@
                         "description": "Minimal request — only required fields. to_name, reply_to, cc, bcc, headers, and body_text are all optional."
                     },
                     "response": []
+                }
+            ]
+        },
+        {
+            "name": "WhatsApp (wab)",
+            "item": [
+                {
+                    "name": "Send WhatsApp",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"to\": \"447848103867\",\n    \"message\": \"Hello from Notify 👋\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/wab/send",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "wab", "send"]
+                        },
+                        "description": "Queues a WhatsApp message via the wab (Baileys) service. Returns 202 immediately with a tracking UUID; check delivery status in the dashboard.\n\n**Required fields:** to (number, country code, digits only), message\n\n**Authentication:** X-API-Key header"
+                    },
+                    "response": [
+                        {
+                            "name": "202 Accepted – Message Queued",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-API-Key",
+                                        "value": "{{api_key}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"to\": \"447848103867\",\n    \"message\": \"Hello from Notify\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/wab/send",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["api", "wab", "send"]
+                                }
+                            },
+                            "status": "Accepted",
+                            "code": 202,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"WhatsApp message queued successfully.\",\n    \"data\": {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"status\": \"queued\",\n        \"queued_at\": \"2026-06-24T10:30:00+00:00\"\n    }\n}"
+                        }
+                    ]
                 }
             ]
         }

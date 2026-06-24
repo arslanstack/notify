@@ -1,6 +1,10 @@
 # Notify
 
-A self-hosted transactional email dispatch API built on **Laravel 13 + Inertia.js + React 19**. Expose a single authenticated endpoint, queue every email through Redis so the API responds in milliseconds, and track every send — status, SMTP response, errors, timestamps — in an admin dashboard.
+A self-hosted, multi-channel transactional dispatch service built on **Laravel 13 + Inertia.js + React 19**. Expose authenticated API endpoints, queue every message through Redis so the API responds in milliseconds, and track every send in an admin dashboard.
+
+Channels:
+- **`mail`** — SMTP email (Resend).
+- **`wab`** — WhatsApp via [Baileys](https://github.com/WhiskeySockets/Baileys), running as a separate Node service ([whatsapp-baileys](https://github.com/arslanstack/whatsapp-baileys)) that Notify drives. `wa`/`whatsapp` are reserved for a future official Meta WhatsApp channel.
 
 ---
 
@@ -10,6 +14,7 @@ A self-hosted transactional email dispatch API built on **Laravel 13 + Inertia.j
 - [How it works](#how-it-works)
 - [Tech stack](#tech-stack)
 - [API usage](#api-usage)
+- [WhatsApp channel (wab)](#whatsapp-channel-wab)
 - [Local development](#local-development)
 - [First-time production deploy](#first-time-production-deploy)
 - [Subsequent deploys](#subsequent-deploys)
@@ -128,6 +133,59 @@ curl -X POST https://your-domain.com/api/mail/sendmail \
 A ready-to-import Postman collection is included: [`notify-postman-collection.json`](notify-postman-collection.json). Set its `base_url` and `api_key` variables.
 
 > ⚠️ Multi-line `curl` with `\` continuations breaks if you paste blank lines between them in a shell. Use the single-line form above to be safe.
+
+---
+
+## WhatsApp channel (wab)
+
+WhatsApp sending is handled by a separate Node service — [whatsapp-baileys](https://github.com/arslanstack/whatsapp-baileys) — because Baileys can't run inside PHP. Notify is the brain (API, queue, logging, dashboard, health checks); the Node service is a thin engine (connect + send). Notify talks to it over localhost using a shared secret.
+
+### Send a WhatsApp message
+
+```
+POST /api/wab/send
+```
+
+Headers are the same as mail (`X-API-Key`, `Content-Type`, `Accept`). Body:
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `to` | string | ✅ | Recipient number, country code, digits only (e.g. `447848103867`) |
+| `message` | string | ✅ | Text body |
+
+```bash
+curl -X POST https://your-domain.com/api/wab/send \
+  -H "X-API-Key: your-api-key" -H "Content-Type: application/json" -H "Accept: application/json" \
+  -d '{"to":"447848103867","message":"Hello from Notify"}'
+```
+
+Returns `202` with a tracking UUID, identical in shape to the mail response. The `SendWabJob` calls the wab service; delivery status lands in the **WhatsApp** dashboard tab.
+
+### Management dashboard (`/wab`)
+
+- **Live connection status** (polled) — connected / connecting / logged out / unreachable.
+- **Pairing-code linking** — enter a number, generate an 8-char code, type it into the phone (QR scanning is blocked from datacenter IPs; pairing code is the working method).
+- **Buttons** — Check now, Send test, Reconnect, Re-link/Logout.
+- **Searchable log table** of every WhatsApp send with a detail modal.
+
+### Config (`.env`)
+
+```env
+WAB_URL=http://127.0.0.1:3210          # the Node service (localhost; same server)
+WAB_INTERNAL_SECRET=<same value as the wab service's .env>
+WAB_TEST_NUMBER=923302430695           # weekly keep-warm target
+WAB_ALERT_EMAIL=you@example.com        # emailed if the session logs out
+```
+
+### Weekly health check
+
+`php artisan wab:health-check` runs weekly (scheduled in `routes/console.php`). If the session is logged out/unreachable it emails `WAB_ALERT_EMAIL`; if connected but idle for 7+ days it sends a keep-warm test to `WAB_TEST_NUMBER`. This requires Laravel's scheduler cron on the server:
+
+```
+* * * * * cd /path/to/notify && php artisan schedule:run >> /dev/null 2>&1
+```
+
+> The linked phone must connect to WhatsApp at least every ~14 days or the device is logged out — the health check surfaces this.
 
 ---
 

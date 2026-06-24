@@ -18,6 +18,13 @@ return [
         'api_key' => env('API_KEY'),
     ],
 
+    'wab' => [
+        'url' => env('WAB_URL', 'http://127.0.0.1:3210'),
+        'secret' => env('WAB_INTERNAL_SECRET'),
+        'test_number' => env('WAB_TEST_NUMBER'),
+        'alert_email' => env('WAB_ALERT_EMAIL'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
