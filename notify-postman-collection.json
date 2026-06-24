@@ -1,0 +1,203 @@
+{
+    "info": {
+        "_postman_id": "notify-api-v1",
+        "name": "Notify - Email API",
+        "description": "API for dispatching transactional emails via Notify. All requests require the X-API-Key header.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://notify.test",
+            "type": "string"
+        },
+        {
+            "key": "api_key",
+            "value": "notify_sk_live_changeme_2026",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Mail",
+            "item": [
+                {
+                    "name": "Send Mail",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"to_email\": \"recipient@example.com\",\n    \"to_name\": \"John Doe\",\n    \"from_email\": \"noreply@yourdomain.com\",\n    \"from_name\": \"Your App\",\n    \"subject\": \"Welcome to Our Platform!\",\n    \"body_html\": \"<h1>Welcome, John!</h1><p>Thanks for signing up. We're excited to have you on board.</p><p>Click the button below to get started.</p><a href='https://example.com/get-started' style='display:inline-block;padding:12px 24px;background:#4F46E5;color:#fff;text-decoration:none;border-radius:6px;'>Get Started</a>\",\n    \"body_text\": \"Welcome, John! Thanks for signing up. Visit https://example.com/get-started to get started.\",\n    \"reply_to_email\": \"support@yourdomain.com\",\n    \"reply_to_name\": \"Support Team\",\n    \"cc\": [\n        \"cc@example.com\"\n    ],\n    \"bcc\": [\n        \"bcc@example.com\"\n    ],\n    \"headers\": {\n        \"X-Campaign-ID\": \"welcome-series-001\",\n        \"X-Customer-ID\": \"cust_12345\"\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/mail/sendmail",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "mail", "sendmail"]
+                        },
+                        "description": "Dispatches an email asynchronously via the queue. Returns 202 immediately with a tracking UUID. Use the UUID to look up the delivery status in the dashboard.\n\n**Required fields:** to_email, from_email, from_name, subject, body_html\n\n**Authentication:** X-API-Key header"
+                    },
+                    "response": [
+                        {
+                            "name": "202 Accepted – Email Queued",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-API-Key",
+                                        "value": "{{api_key}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"to_email\": \"recipient@example.com\",\n    \"to_name\": \"John Doe\",\n    \"from_email\": \"noreply@yourdomain.com\",\n    \"from_name\": \"Your App\",\n    \"subject\": \"Welcome to Our Platform!\",\n    \"body_html\": \"<h1>Welcome, John!</h1><p>Thanks for signing up.</p>\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/mail/sendmail",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["api", "mail", "sendmail"]
+                                }
+                            },
+                            "status": "Accepted",
+                            "code": 202,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Email queued successfully.\",\n    \"data\": {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"status\": \"queued\",\n        \"queued_at\": \"2026-06-24T10:30:00+00:00\"\n    }\n}"
+                        },
+                        {
+                            "name": "401 Unauthorized – Invalid API Key",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-API-Key",
+                                        "value": "wrong_key"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/mail/sendmail",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["api", "mail", "sendmail"]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Unauthorized. Invalid or missing API key.\"\n}"
+                        },
+                        {
+                            "name": "422 Unprocessable – Validation Error",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "X-API-Key",
+                                        "value": "{{api_key}}"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"to_email\": \"not-an-email\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/api/mail/sendmail",
+                                    "host": ["{{base_url}}"],
+                                    "path": ["api", "mail", "sendmail"]
+                                }
+                            },
+                            "status": "Unprocessable Entity",
+                            "code": 422,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"message\": \"The to email field must be a valid email address.\",\n    \"errors\": {\n        \"to_email\": [\n            \"The to email field must be a valid email address.\"\n        ],\n        \"from_email\": [\n            \"The from email field is required.\"\n        ],\n        \"from_name\": [\n            \"The from name field is required.\"\n        ],\n        \"subject\": [\n            \"The subject field is required.\"\n        ],\n        \"body_html\": [\n            \"The body html field is required.\"\n        ]\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Send Mail (Minimal)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{api_key}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"to_email\": \"recipient@example.com\",\n    \"from_email\": \"noreply@yourdomain.com\",\n    \"from_name\": \"Your App\",\n    \"subject\": \"Password Reset\",\n    \"body_html\": \"<p>Click <a href='https://example.com/reset?token=abc123'>here</a> to reset your password. This link expires in 60 minutes.</p>\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/mail/sendmail",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "mail", "sendmail"]
+                        },
+                        "description": "Minimal request — only required fields. to_name, reply_to, cc, bcc, headers, and body_text are all optional."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}
